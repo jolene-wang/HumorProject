@@ -11,7 +11,7 @@ interface Caption {
   like_count: number;
   images: {
     url: string;
-  };
+  } | null;
 }
 
 export default function Home() {
@@ -42,7 +42,7 @@ export default function Home() {
       if (error) {
         setError(error.message);
       } else if (data) {
-        setCaptions(data);
+        setCaptions(data as any);
         setTotal(count || 0);
       }
       setLoading(false);
