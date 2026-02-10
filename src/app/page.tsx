@@ -1,65 +1,119 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/utils/supabase";
 import Image from "next/image";
 
+interface Caption {
+  id: string;
+  content: string;
+  created_datetime_utc: string;
+  like_count: number;
+  images: {
+    url: string;
+  };
+}
+
 export default function Home() {
+  const [captions, setCaptions] = useState<Caption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const perPage = 60;
+
+  useEffect(() => {
+    const fetchCaptions = async () => {
+      setLoading(true);
+      const from = (page - 1) * perPage;
+      const to = from + perPage - 1;
+      
+      const { data, error, count } = await supabase
+        .from("captions")
+        .select(`
+          id, 
+          content, 
+          created_datetime_utc, 
+          like_count,
+          images(url)
+        `, { count: 'exact' })
+        .range(from, to);
+      
+      if (error) {
+        setError(error.message);
+      } else if (data) {
+        setCaptions(data);
+        setTotal(count || 0);
+      }
+      setLoading(false);
+    };
+    fetchCaptions();
+  }, [page]);
+
+  const totalPages = Math.ceil(total / perPage);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-center mb-4 text-zinc-900 dark:text-zinc-50">
+          Captions from Supabase
+        </h1>
+        <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">
+          Showing {captions.length} of {total} captions (Page {page} of {totalPages})
+        </p>
+        
+        {loading && <p className="text-center text-zinc-600">Loading...</p>}
+        {error && <p className="text-center text-red-600">Error: {error}</p>}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {captions.map((caption) => (
+            <div
+              key={caption.id}
+              className="bg-white dark:bg-zinc-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {caption.images?.url && (
+                <div className="relative w-full h-64">
+                  <Image
+                    src={caption.images.url}
+                    alt={caption.content}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              )}
+              <div className="p-6">
+                <p className="text-lg text-zinc-800 dark:text-zinc-200 mb-3">
+                  {caption.content}
+                </p>
+                <div className="flex justify-between items-center text-sm text-zinc-500 dark:text-zinc-400">
+                  <span>{new Date(caption.created_datetime_utc).toLocaleDateString()}</span>
+                  <span>❤️ {caption.like_count} likes</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        
+        <div className="flex justify-center items-center gap-4 mt-8">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-zinc-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-700"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Previous
+          </button>
+          <span className="text-zinc-900 dark:text-zinc-50">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-zinc-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-700"
           >
-            Documentation
-          </a>
+            Next
+          </button>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
