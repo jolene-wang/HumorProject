@@ -10,5 +10,5 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  return NextResponse.redirect(new URL('/protected', request.url))
+  return NextResponse.redirect(new URL('/', request.url))
 }

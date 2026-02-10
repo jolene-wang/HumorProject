@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabase";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface Caption {
@@ -20,9 +21,26 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [user, setUser] = useState<any>(null);
   const perPage = 60;
+  const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+      } else {
+        setUser(user);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    
     const fetchCaptions = async () => {
       setLoading(true);
       const from = (page - 1) * perPage;
@@ -48,16 +66,33 @@ export default function Home() {
       setLoading(false);
     };
     fetchCaptions();
-  }, [page]);
+  }, [page, user]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   const totalPages = Math.ceil(total / perPage);
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-4 text-zinc-900 dark:text-zinc-50">
-          Captions from Supabase
-        </h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
+            Captions from Supabase
+          </h1>
+          <button
+            onClick={handleSignOut}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
         <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">
           Showing {captions.length} of {total} captions (Page {page} of {totalPages})
         </p>
