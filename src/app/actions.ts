@@ -16,8 +16,8 @@ export async function submitVote(captionId: string, voteType: "upvote" | "downvo
     .from("caption_votes")
     .insert({
       caption_id: captionId,
-      user_id: user.id,
-      vote_type: voteType
+      profile_id: user.id,
+      vote_value: voteType === "upvote" ? 1 : -1
     });
 
   if (error) {
