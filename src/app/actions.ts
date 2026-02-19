@@ -17,7 +17,8 @@ export async function submitVote(captionId: string, voteType: "upvote" | "downvo
     .insert({
       caption_id: captionId,
       profile_id: user.id,
-      vote_value: voteType === "upvote" ? 1 : -1
+      vote_value: voteType === "upvote" ? 1 : -1,
+      created_datetime_utc: new Date().toISOString()
     });
 
   if (error) {
