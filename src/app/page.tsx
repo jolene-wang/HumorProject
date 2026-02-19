@@ -74,10 +74,12 @@ export default function Home() {
     router.push("/login");
   };
 
-  const handleVote = async (captionId: string, voteType: "upvote" | "downvote") => {
-    const result = await submitVote(captionId, voteType);
+  const handleVote = async (captionId: string, voteValue: number) => {
+    const result = await submitVote(captionId, voteValue);
     if (result.error) {
       alert(result.error);
+    } else {
+      alert('Vote submitted successfully!');
     }
   };
 
@@ -134,13 +136,13 @@ export default function Home() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleVote(caption.id, "upvote")}
+                    onClick={() => handleVote(caption.id, 1)}
                     className="flex-1 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors"
                   >
                     👍 Upvote
                   </button>
                   <button
-                    onClick={() => handleVote(caption.id, "downvote")}
+                    onClick={() => handleVote(caption.id, -1)}
                     className="flex-1 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition-colors"
                   >
                     👎 Downvote
