@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { submitVote } from "./actions";
 
 interface Caption {
   id: string;
@@ -73,6 +74,13 @@ export default function Home() {
     router.push("/login");
   };
 
+  const handleVote = async (captionId: string, voteType: "upvote" | "downvote") => {
+    const result = await submitVote(captionId, voteType);
+    if (result.error) {
+      alert(result.error);
+    }
+  };
+
   const totalPages = Math.ceil(total / perPage);
 
   if (!user) {
@@ -120,9 +128,23 @@ export default function Home() {
                 <p className="text-lg text-zinc-800 dark:text-zinc-200 mb-3">
                   {caption.content}
                 </p>
-                <div className="flex justify-between items-center text-sm text-zinc-500 dark:text-zinc-400">
+                <div className="flex justify-between items-center text-sm text-zinc-500 dark:text-zinc-400 mb-3">
                   <span>{new Date(caption.created_datetime_utc).toLocaleDateString()}</span>
                   <span>❤️ {caption.like_count} likes</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleVote(caption.id, "upvote")}
+                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors"
+                  >
+                    👍 Upvote
+                  </button>
+                  <button
+                    onClick={() => handleVote(caption.id, "downvote")}
+                    className="flex-1 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition-colors"
+                  >
+                    👎 Downvote
+                  </button>
                 </div>
               </div>
             </div>
