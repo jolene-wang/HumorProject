@@ -14,6 +14,7 @@ interface Caption {
   images: {
     url: string;
   } | null;
+  userVote?: number | null;
 }
 
 export default function Home() {
@@ -61,7 +62,19 @@ export default function Home() {
       if (error) {
         setError(error.message);
       } else if (data) {
-        setCaptions(data as any);
+        const captionIds = data.map(c => c.id);
+        const { data: votes } = await supabase
+          .from("caption_votes")
+          .select("caption_id, vote_value")
+          .eq("profile_id", user.id)
+          .in("caption_id", captionIds);
+        
+        const captionsWithVotes = data.map(caption => ({
+          ...caption,
+          userVote: votes?.find(v => v.caption_id === caption.id)?.vote_value || null
+        }));
+        
+        setCaptions(captionsWithVotes as any);
         setTotal(count || 0);
       }
       setLoading(false);
@@ -79,7 +92,9 @@ export default function Home() {
     if (result.error) {
       alert(result.error);
     } else {
-      alert('Vote submitted successfully!');
+      setCaptions(prev => prev.map(c => 
+        c.id === captionId ? { ...c, userVote: voteValue } : c
+      ));
     }
   };
 
@@ -137,13 +152,21 @@ export default function Home() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleVote(caption.id, 1)}
-                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors"
+                    className={`flex-1 px-3 py-2 rounded transition-colors ${
+                      caption.userVote === 1 
+                        ? 'bg-green-700 text-white' 
+                        : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
                   >
                     👍 Upvote
                   </button>
                   <button
                     onClick={() => handleVote(caption.id, -1)}
-                    className="flex-1 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition-colors"
+                    className={`flex-1 px-3 py-2 rounded transition-colors ${
+                      caption.userVote === -1 
+                        ? 'bg-red-700 text-white' 
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
                   >
                     👎 Downvote
                   </button>
