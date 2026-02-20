@@ -88,15 +88,13 @@ export default function Home() {
   };
 
   const handleVote = async (captionId: string, voteValue: number) => {
-    const caption = captions.find(c => c.id === captionId);
-    if (caption?.userVote) {
-      alert('You have already voted on this caption');
-      return;
-    }
-    
     const result = await submitVote(captionId, voteValue);
     if (result.error) {
-      alert(result.error);
+      if (result.error.includes('duplicate key')) {
+        alert('You have already voted on this caption');
+      } else {
+        alert(result.error);
+      }
     } else {
       setCaptions(prev => prev.map(c => 
         c.id === captionId ? { ...c, userVote: voteValue } : c
@@ -158,22 +156,20 @@ export default function Home() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleVote(caption.id, 1)}
-                    disabled={caption.userVote !== null && caption.userVote !== undefined}
-                    className={`flex-1 px-3 py-2 rounded font-semibold transition-all disabled:cursor-not-allowed ${
+                    className={`flex-1 px-3 py-2 rounded font-semibold transition-all ${
                       caption.userVote === 1 
                         ? 'bg-green-500 text-white ring-4 ring-green-300 scale-105' 
-                        : 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-30'
+                        : 'bg-green-600 text-white hover:bg-green-700'
                     }`}
                   >
                     👍 Upvote
                   </button>
                   <button
                     onClick={() => handleVote(caption.id, -1)}
-                    disabled={caption.userVote !== null && caption.userVote !== undefined}
-                    className={`flex-1 px-3 py-2 rounded font-semibold transition-all disabled:cursor-not-allowed ${
+                    className={`flex-1 px-3 py-2 rounded font-semibold transition-all ${
                       caption.userVote === -1 
                         ? 'bg-red-500 text-white ring-4 ring-red-300 scale-105' 
-                        : 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-30'
+                        : 'bg-red-600 text-white hover:bg-red-700'
                     }`}
                   >
                     👎 Downvote
