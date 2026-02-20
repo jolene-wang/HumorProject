@@ -13,11 +13,14 @@ export async function submitVote(captionId: string, voteValue: number) {
 
   const { error } = await supabase
     .from("caption_votes")
-    .insert({
+    .upsert({
       caption_id: captionId,
       profile_id: user.id,
       vote_value: voteValue,
-      created_datetime_utc: new Date().toISOString()
+      created_datetime_utc: new Date().toISOString(),
+      modified_datetime_utc: new Date().toISOString()
+    }, {
+      onConflict: 'profile_id,caption_id'
     });
 
   if (error) {
