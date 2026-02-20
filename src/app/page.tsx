@@ -63,11 +63,14 @@ export default function Home() {
         setError(error.message);
       } else if (data) {
         const captionIds = data.map(c => c.id);
-        const { data: votes } = await supabase
+        const { data: votes, error: votesError } = await supabase
           .from("caption_votes")
           .select("caption_id, vote_value")
           .eq("profile_id", user.id)
           .in("caption_id", captionIds);
+        
+        console.log('Fetched votes:', votes);
+        console.log('Votes error:', votesError);
         
         const captionsWithVotes = data.map(caption => ({
           ...caption,
