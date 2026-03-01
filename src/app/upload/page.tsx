@@ -73,10 +73,7 @@ export default function UploadPage() {
         setLoading(false);
         return;
       }
-
-      console.log('Captions result:', captionsResult.data);
       
-      // Handle different response formats
       const captionData = captionsResult.data;
       let captionsList: string[] = [];
       
