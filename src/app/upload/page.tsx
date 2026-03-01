@@ -74,8 +74,24 @@ export default function UploadPage() {
         return;
       }
 
-      setCaptions(captionsResult.data.captions || []);
-      setStatus("Captions generated successfully!");
+      console.log('Captions result:', captionsResult.data);
+      
+      // Handle different response formats
+      const captionData = captionsResult.data;
+      let captionsList = [];
+      
+      if (Array.isArray(captionData)) {
+        captionsList = captionData.map(c => c.content || c.caption || c);
+      } else if (captionData.captions) {
+        captionsList = Array.isArray(captionData.captions) 
+          ? captionData.captions.map(c => c.content || c.caption || c)
+          : [captionData.captions];
+      } else if (captionData.content) {
+        captionsList = [captionData.content];
+      }
+      
+      setCaptions(captionsList);
+      setStatus(captionsList.length > 0 ? "Captions generated successfully!" : "No captions generated");
       setLoading(false);
     } catch (error) {
       setStatus(`Error: ${error}`);
