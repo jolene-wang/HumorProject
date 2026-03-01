@@ -115,12 +115,20 @@ export default function Home() {
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
             Captions from Supabase
           </h1>
-          <button
-            onClick={handleSignOut}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Sign Out
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => router.push("/upload")}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Upload Image
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
         <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">
           Showing {captions.length} of {total} captions (Page {page} of {totalPages})
