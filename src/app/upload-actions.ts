@@ -55,13 +55,16 @@ export async function registerImage(cdnUrl: string) {
     return { error: "Not authenticated" };
   }
 
-  const response = await fetch(`${API_BASE_URL}/pipeline/register-image`, {
+  const response = await fetch(`${API_BASE_URL}/pipeline/upload-image-from-url`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ imageUrl: cdnUrl }),
+    body: JSON.stringify({ 
+      imageUrl: cdnUrl,
+      isCommonUse: false 
+    }),
   });
 
   if (!response.ok) {
