@@ -68,7 +68,8 @@ export async function registerImage(cdnUrl: string) {
   });
 
   if (!response.ok) {
-    return { error: `Failed to register image: ${response.statusText}` };
+    const errorText = await response.text();
+    return { error: `Failed to register image: ${response.status} ${response.statusText} - ${errorText}` };
   }
 
   const data = await response.json();
