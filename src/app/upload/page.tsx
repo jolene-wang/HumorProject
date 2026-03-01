@@ -78,13 +78,13 @@ export default function UploadPage() {
       
       // Handle different response formats
       const captionData = captionsResult.data;
-      let captionsList = [];
+      let captionsList: string[] = [];
       
       if (Array.isArray(captionData)) {
-        captionsList = captionData.map(c => c.content || c.caption || c);
+        captionsList = captionData.map((c: any) => c.content || c.caption || c);
       } else if (captionData.captions) {
         captionsList = Array.isArray(captionData.captions) 
-          ? captionData.captions.map(c => c.content || c.caption || c)
+          ? captionData.captions.map((c: any) => c.content || c.caption || c)
           : [captionData.captions];
       } else if (captionData.content) {
         captionsList = [captionData.content];
