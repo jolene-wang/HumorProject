@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { generatePresignedUrl, registerImage, generateCaptions } from "../upload-actions";
+import Nav from "../components/Nav";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [captions, setCaptions] = useState<string[]>([]);
-  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -97,18 +96,12 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
-            Upload Image
-          </h1>
-          <button
-            onClick={() => router.push("/")}
-            className="bg-zinc-800 text-white px-4 py-2 rounded-lg hover:bg-zinc-700 transition-colors"
-          >
-            Back to Home
-          </button>
+    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
+      <Nav />
+      <div className="max-w-4xl mx-auto p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">📸 Create a Meme</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Upload an image and AI will generate captions for it</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-8">
