@@ -64,14 +64,15 @@ export default function MyMemesPage() {
       return;
     }
 
-    // Re-fetch captions for this image
-    const { data } = await supabase
-      .from("captions")
-      .select("id, content, like_count")
-      .eq("image_id", imageId);
+    // Re-fetch captions for this image using the known-working join
+    const { data: refreshed } = await supabase
+      .from("images")
+      .select("captions(id, content, like_count)")
+      .eq("id", imageId)
+      .single();
 
     setImages(prev => prev.map(img =>
-      img.id === imageId ? { ...img, captions: data ?? img.captions, generating: false } : img
+      img.id === imageId ? { ...img, captions: (refreshed as any)?.captions ?? img.captions, generating: false } : img
     ));
     // Expand to show new captions
     setExpanded(prev => new Set(prev).add(imageId));
