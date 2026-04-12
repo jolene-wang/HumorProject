@@ -17,6 +17,7 @@ export default function Nav() {
     { href: "/", label: "🏠 Home" },
     { href: "/vote", label: "🗳️ Vote" },
     { href: "/upload", label: "📸 Create" },
+    { href: "/mymemes", label: "🎨 My Memes" },
     { href: "/history", label: "📋 My Votes" },
   ];
 
