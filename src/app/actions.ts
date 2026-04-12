@@ -11,6 +11,37 @@ export async function submitVote(captionId: string, voteValue: number) {
     return { error: "Not authenticated" };
   }
 
+  // Check for existing vote
+  const { data: existing } = await supabase
+    .from("caption_votes")
+    .select("vote_value")
+    .eq("caption_id", captionId)
+    .eq("profile_id", user.id)
+    .single();
+
+  if (existing) {
+    if (existing.vote_value === voteValue) {
+      // Same vote — toggle off
+      const { error } = await supabase
+        .from("caption_votes")
+        .delete()
+        .eq("caption_id", captionId)
+        .eq("profile_id", user.id);
+      if (error) return { error: error.message };
+      return { success: true, newVote: null };
+    } else {
+      // Different vote — update
+      const { error } = await supabase
+        .from("caption_votes")
+        .update({ vote_value: voteValue, modified_by_user_id: user.id })
+        .eq("caption_id", captionId)
+        .eq("profile_id", user.id);
+      if (error) return { error: error.message };
+      return { success: true, newVote: voteValue };
+    }
+  }
+
+  // No existing vote — insert
   const { error } = await supabase
     .from("caption_votes")
     .insert({
@@ -22,9 +53,6 @@ export async function submitVote(captionId: string, voteValue: number) {
       modified_by_user_id: user.id
     });
 
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true };
+  if (error) return { error: error.message };
+  return { success: true, newVote: voteValue };
 }
