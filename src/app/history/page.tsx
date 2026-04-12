@@ -70,16 +70,15 @@ export default function HistoryPage() {
       const [votesRes, savesRes] = await Promise.all([
         supabase
           .from("caption_votes")
-          .select("vote_value, created_datetime_utc, captions(id, content, like_count, created_datetime_utc, images(url))")
+          .select("vote_value, captions(id, content, like_count, created_datetime_utc, images(url))")
           .eq("profile_id", user.id),
         supabase
           .from("caption_saves")
-          .select("created_datetime_utc, captions(id, content, like_count, created_datetime_utc, images(url))")
+          .select("captions(id, content, like_count, created_datetime_utc, images(url))")
           .eq("profile_id", user.id),
       ]);
 
       const savedIds = new Set((savesRes.data ?? []).filter((s: any) => s.captions).map((s: any) => s.captions.id));
-      const savedAtMap = new Map((savesRes.data ?? []).filter((s: any) => s.captions).map((s: any) => [s.captions.id, s.created_datetime_utc]));
 
       // Build a unified map: captionId -> Caption
       const map = new Map<string, Caption>();
@@ -89,8 +88,8 @@ export default function HistoryPage() {
         map.set(c.id, {
           ...c,
           vote_value: v.vote_value,
-          voted_at: v.created_datetime_utc,
-          saved_at: savedAtMap.get(c.id) ?? null,
+          voted_at: c.created_datetime_utc,
+          saved_at: c.created_datetime_utc ?? null,
           isSaved: savedIds.has(c.id),
         });
       }
@@ -103,7 +102,7 @@ export default function HistoryPage() {
             ...c,
             vote_value: null,
             voted_at: null,
-            saved_at: s.created_datetime_utc,
+            saved_at: c.created_datetime_utc,
             isSaved: true,
           });
         }
