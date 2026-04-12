@@ -38,7 +38,8 @@ export default function VotePage() {
   const [user, setUser] = useState<any>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [votingId, setVotingId] = useState<string | null>(null);
-  const perPage = 60;
+  const [sort, setSort] = useState<"recent" | "oldest" | "most_liked" | "least_liked">("recent");
+  const perPage = 20;
   const router = useRouter();
   const supabase = createClient();
 
@@ -70,9 +71,17 @@ export default function VotePage() {
       setLoading(true);
       const from = (page - 1) * perPage;
       const to = from + perPage - 1;
+      const sortMap = {
+        recent:      { col: "created_datetime_utc", asc: false },
+        oldest:      { col: "created_datetime_utc", asc: true },
+        most_liked:  { col: "like_count", asc: false },
+        least_liked: { col: "like_count", asc: true },
+      };
+      const { col, asc } = sortMap[sort];
       const { data, error, count } = await supabase
         .from("captions")
         .select("id, content, created_datetime_utc, like_count, images(url)", { count: "exact" })
+        .order(col, { ascending: asc })
         .range(from, to);
       if (error) {
         setError(error.message);
@@ -92,7 +101,7 @@ export default function VotePage() {
       setLoading(false);
     };
     fetchCaptions();
-  }, [page, user]);
+  }, [page, user, sort]);
 
   const handleSave = async (captionId: string) => {
     // Optimistic
@@ -143,6 +152,27 @@ export default function VotePage() {
         <p className="text-purple-200 text-sm">
           {total} captions · vote on the funniest ones · click again to change or remove
         </p>
+      </div>
+
+      {/* Sort bar */}
+      <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex items-center justify-end gap-2">
+        <span className="text-zinc-500 text-xs mr-1">Sort by</span>
+        {(["recent", "oldest", "most_liked", "least_liked"] as const).map((s) => {
+          const labels = { recent: "Most Recent", oldest: "Oldest", most_liked: "Most Liked", least_liked: "Least Liked" };
+          return (
+            <button
+              key={s}
+              onClick={() => { setSort(s); setPage(1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                sort === s
+                  ? "bg-purple-600 text-white"
+                  : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700"
+              }`}
+            >
+              {labels[s]}
+            </button>
+          );
+        })}
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
@@ -232,7 +262,7 @@ export default function VotePage() {
         {!loading && totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 mt-14">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
               disabled={page === 1}
               className="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl disabled:opacity-30 hover:bg-zinc-700 transition-colors text-sm font-medium border border-zinc-700"
             >
@@ -242,7 +272,7 @@ export default function VotePage() {
               {page} / {totalPages}
             </span>
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
               disabled={page === totalPages}
               className="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl disabled:opacity-30 hover:bg-zinc-700 transition-colors text-sm font-medium border border-zinc-700"
             >
