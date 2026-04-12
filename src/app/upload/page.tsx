@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { generatePresignedUrl, registerImage, generateCaptions } from "../upload-actions";
 import Nav from "../components/Nav";
 
@@ -9,6 +10,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [captions, setCaptions] = useState<string[]>([]);
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -96,24 +98,24 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
+    <div className="min-h-screen bg-zinc-950">
       <Nav />
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">📸 Create a Meme</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Upload an image and AI will generate captions for it</p>
+          <h1 className="text-3xl font-bold text-white">📸 Create a Meme</h1>
+          <p className="text-zinc-400 mt-1">Upload an image and AI will generate captions for it</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-8">
+        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
           <div className="mb-6">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Select Image
             </label>
             <input
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic"
               onChange={handleFileChange}
-              className="block w-full text-sm text-zinc-900 dark:text-zinc-100 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700"
+              className="block w-full text-sm text-zinc-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-zinc-700 file:text-white hover:file:bg-zinc-600"
             />
           </div>
 
@@ -122,7 +124,7 @@ export default function UploadPage() {
               <img
                 src={URL.createObjectURL(file)}
                 alt="Preview"
-                className="max-w-full h-auto rounded-lg"
+                className="max-w-full h-auto rounded-xl"
               />
             </div>
           )}
@@ -130,27 +132,33 @@ export default function UploadPage() {
           <button
             onClick={handleUpload}
             disabled={!file || loading}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Processing..." : "Upload & Generate Captions"}
           </button>
 
           {status && (
-            <p className="mt-4 text-center text-zinc-700 dark:text-zinc-300">
+            <p className="mt-4 text-center text-zinc-400">
               {status}
             </p>
           )}
 
           {captions.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-4">
-                Generated Captions
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">Generated Captions</h2>
+                <button
+                  onClick={() => router.push("/mymemes")}
+                  className="text-sm text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                >
+                  View in My Memes →
+                </button>
+              </div>
               <div className="space-y-2">
                 {captions.map((caption, index) => (
                   <div
                     key={index}
-                    className="p-4 bg-zinc-100 dark:bg-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100"
+                    className="p-4 bg-zinc-800 rounded-xl text-zinc-200 text-sm leading-relaxed"
                   >
                     {caption}
                   </div>

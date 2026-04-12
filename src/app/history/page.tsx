@@ -29,6 +29,16 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "least_liked", label: "Least Liked" },
 ];
 
+function sortItems(items: Caption[], sort: SortKey): Caption[] {
+  return [...items].sort((a, b) => {
+    if (sort === "most_liked") return b.like_count - a.like_count;
+    if (sort === "least_liked") return a.like_count - b.like_count;
+    const aDate = new Date(a.voted_at ?? a.saved_at ?? 0).getTime();
+    const bDate = new Date(b.voted_at ?? b.saved_at ?? 0).getTime();
+    return sort === "recent" ? bDate - aDate : aDate - bDate;
+  });
+}
+
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   useEffect(() => {
     const t = setTimeout(onDone, 2000);
@@ -105,19 +115,9 @@ export default function HistoryPage() {
     init();
   }, []);
 
-  const sortItems = (items: Caption[]): Caption[] => {
-    return [...items].sort((a, b) => {
-      if (sort === "most_liked") return b.like_count - a.like_count;
-      if (sort === "least_liked") return a.like_count - b.like_count;
-      const aDate = new Date(a.voted_at ?? a.saved_at ?? 0).getTime();
-      const bDate = new Date(b.voted_at ?? b.saved_at ?? 0).getTime();
-      return sort === "recent" ? bDate - aDate : aDate - bDate;
-    });
-  };
-
-  const upvoted = useMemo(() => sortItems(captions.filter(c => c.vote_value === 1)), [captions, sort]);
-  const downvoted = useMemo(() => sortItems(captions.filter(c => c.vote_value === -1)), [captions, sort]);
-  const savedList = useMemo(() => sortItems(captions.filter(c => c.isSaved)), [captions, sort]);
+  const upvoted = useMemo(() => sortItems(captions.filter(c => c.vote_value === 1), sort), [captions, sort]);
+  const downvoted = useMemo(() => sortItems(captions.filter(c => c.vote_value === -1), sort), [captions, sort]);
+  const savedList = useMemo(() => sortItems(captions.filter(c => c.isSaved), sort), [captions, sort]);
 
   const activeItems = tab === "upvoted" ? upvoted : tab === "downvoted" ? downvoted : savedList;
 
