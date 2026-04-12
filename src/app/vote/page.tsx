@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Nav from "../components/Nav";
-import { submitVote } from "../actions";
+import { submitVote, toggleSave } from "../actions";
 
 interface Caption {
   id: string;
@@ -14,6 +14,7 @@ interface Caption {
   like_count: number;
   images: { url: string } | null;
   userVote?: number | null;
+  isSaved?: boolean;
 }
 
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
@@ -77,14 +78,14 @@ export default function VotePage() {
         setError(error.message);
       } else if (data) {
         const captionIds = data.map(c => c.id);
-        const { data: votes } = await supabase
-          .from("caption_votes")
-          .select("caption_id, vote_value")
-          .eq("profile_id", user.id)
-          .in("caption_id", captionIds);
+        const [{ data: votes }, { data: saves }] = await Promise.all([
+          supabase.from("caption_votes").select("caption_id, vote_value").eq("profile_id", user.id).in("caption_id", captionIds),
+          supabase.from("caption_saves").select("caption_id").eq("profile_id", user.id).in("caption_id", captionIds),
+        ]);
         setCaptions(data.map(caption => ({
           ...caption,
           userVote: votes?.find(v => v.caption_id === caption.id)?.vote_value ?? null,
+          isSaved: saves?.some(s => s.caption_id === caption.id) ?? false,
         })) as any);
         setTotal(count || 0);
       }
@@ -92,6 +93,18 @@ export default function VotePage() {
     };
     fetchCaptions();
   }, [page, user]);
+
+  const handleSave = async (captionId: string) => {
+    // Optimistic
+    setCaptions(prev => prev.map(c => c.id === captionId ? { ...c, isSaved: !c.isSaved } : c));
+    const result = await toggleSave(captionId);
+    if (result.error) {
+      setCaptions(prev => prev.map(c => c.id === captionId ? { ...c, isSaved: !c.isSaved } : c));
+      setToast("Something went wrong.");
+    } else {
+      setToast(result.saved ? "🔖 Saved!" : "Removed from saved");
+    }
+  };
 
   const handleVote = async (captionId: string, voteValue: number) => {
     if (votingId === captionId) return;
@@ -176,7 +189,7 @@ export default function VotePage() {
                 <p className="text-zinc-200 text-sm leading-relaxed mb-4">{caption.content}</p>
 
                 {/* Vote buttons */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => handleVote(caption.id, 1)}
                     disabled={votingId === caption.id}
@@ -200,6 +213,16 @@ export default function VotePage() {
                     👎 {caption.userVote === -1 ? "Downvoted" : "Downvote"}
                   </button>
                 </div>
+                <button
+                  onClick={() => handleSave(caption.id)}
+                  className={`w-full py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                    caption.isSaved
+                      ? "bg-yellow-500 text-zinc-900"
+                      : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-yellow-500/20 hover:text-yellow-400 hover:border-yellow-500/50"
+                  }`}
+                >
+                  {caption.isSaved ? "🔖 Saved" : "🔖 Save"}
+                </button>
               </div>
             </div>
           ))}

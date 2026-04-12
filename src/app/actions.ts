@@ -56,3 +56,38 @@ export async function submitVote(captionId: string, voteValue: number) {
   if (error) return { error: error.message };
   return { success: true, newVote: voteValue };
 }
+
+export async function toggleSave(captionId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: existing } = await supabase
+    .from("caption_saves")
+    .select("id")
+    .eq("caption_id", captionId)
+    .eq("profile_id", user.id)
+    .single();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("caption_saves")
+      .delete()
+      .eq("caption_id", captionId)
+      .eq("profile_id", user.id);
+    if (error) return { error: error.message };
+    return { saved: false };
+  }
+
+  const { error } = await supabase
+    .from("caption_saves")
+    .insert({
+      caption_id: captionId,
+      profile_id: user.id,
+      created_datetime_utc: new Date().toISOString(),
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
+    });
+  if (error) return { error: error.message };
+  return { saved: true };
+}
