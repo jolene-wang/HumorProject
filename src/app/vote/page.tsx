@@ -22,7 +22,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
     return () => clearTimeout(t);
   }, [onDone]);
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-5 py-3 rounded-full shadow-lg text-sm font-medium z-50 animate-fade-in">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-5 py-3 rounded-full shadow-xl text-sm font-medium z-50 animate-fade-in flex items-center gap-2">
       {message}
     </div>
   );
@@ -96,19 +96,15 @@ export default function VotePage() {
   const handleVote = async (captionId: string, voteValue: number) => {
     if (votingId === captionId) return;
     setVotingId(captionId);
-
-    // Optimistic update
     setCaptions(prev => prev.map(c => {
       if (c.id !== captionId) return c;
       const prevVote = c.userVote ?? 0;
       const newVote = prevVote === voteValue ? null : voteValue;
       return { ...c, userVote: newVote, like_count: c.like_count + (newVote ?? 0) - prevVote };
     }));
-
     const result = await submitVote(captionId, voteValue);
     if (result.error) {
       setToast("Something went wrong. Try again.");
-      // revert
       setCaptions(prev => prev.map(c => {
         if (c.id !== captionId) return c;
         const revert = c.userVote === null ? voteValue : null;
@@ -124,40 +120,70 @@ export default function VotePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
+    <div className="min-h-screen bg-zinc-950">
       <Nav />
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
 
+      {/* Hero bar */}
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-6 py-10 text-center">
+        <h1 className="text-4xl font-black text-white tracking-tight mb-1">🗳️ Caption Feed</h1>
+        <p className="text-purple-200 text-sm">
+          {total} captions · vote on the funniest ones · click again to change or remove
+        </p>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">🗳️ Vote on Captions</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">{total} captions · click again to change or remove your vote</p>
-        </div>
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-32 gap-3">
+            <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-zinc-500 text-sm">Loading captions...</p>
+          </div>
+        )}
+        {error && <p className="text-center text-red-400 py-10">{error}</p>}
 
-        {loading && <p className="text-center text-zinc-500 py-20">Loading...</p>}
-        {error && <p className="text-center text-red-600">{error}</p>}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
           {captions.map((caption) => (
             <div
               key={caption.id}
-              className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col border border-zinc-100 dark:border-zinc-700"
+              className="break-inside-avoid bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-600 transition-all duration-200 group"
             >
               {caption.images?.url && (
-                <div className="relative w-full h-52 bg-zinc-100 dark:bg-zinc-900 rounded-t-xl overflow-hidden">
-                  <Image src={caption.images.url} alt={caption.content} fill className="object-contain" />
+                <div className="relative w-full bg-zinc-800" style={{ aspectRatio: "4/3" }}>
+                  <Image
+                    src={caption.images.url}
+                    alt={caption.content}
+                    fill
+                    className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                  {/* Like count badge */}
+                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    ❤️ {caption.like_count}
+                  </div>
+                  {/* Voted badge */}
+                  {caption.userVote !== null && caption.userVote !== undefined && (
+                    <div className={`absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full ${
+                      caption.userVote === 1
+                        ? "bg-green-500/90 text-white"
+                        : "bg-red-500/90 text-white"
+                    }`}>
+                      {caption.userVote === 1 ? "👍 Upvoted" : "👎 Downvoted"}
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="p-5 flex flex-col flex-1">
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-4 flex-1 leading-relaxed">{caption.content}</p>
-                <div className="flex gap-2 mb-3">
+
+              <div className="p-4">
+                <p className="text-zinc-200 text-sm leading-relaxed mb-4">{caption.content}</p>
+
+                {/* Vote buttons */}
+                <div className="flex gap-2">
                   <button
                     onClick={() => handleVote(caption.id, 1)}
                     disabled={votingId === caption.id}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 ${
                       caption.userVote === 1
-                        ? "bg-green-500 text-white ring-2 ring-green-300 scale-105"
-                        : "bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-green-100 dark:hover:bg-green-900/40"
+                        ? "bg-green-500 text-white shadow-lg shadow-green-500/30"
+                        : "bg-zinc-800 text-zinc-400 hover:bg-green-500/20 hover:text-green-400 border border-zinc-700 hover:border-green-500/50"
                     }`}
                   >
                     👍 {caption.userVote === 1 ? "Upvoted" : "Upvote"}
@@ -165,41 +191,42 @@ export default function VotePage() {
                   <button
                     onClick={() => handleVote(caption.id, -1)}
                     disabled={votingId === caption.id}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 ${
                       caption.userVote === -1
-                        ? "bg-red-500 text-white ring-2 ring-red-300 scale-105"
-                        : "bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-red-100 dark:hover:bg-red-900/40"
+                        ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
+                        : "bg-zinc-800 text-zinc-400 hover:bg-red-500/20 hover:text-red-400 border border-zinc-700 hover:border-red-500/50"
                     }`}
                   >
                     👎 {caption.userVote === -1 ? "Downvoted" : "Downvote"}
                   </button>
-                </div>
-                <div className="flex justify-between text-xs text-zinc-400">
-                  <span>{new Date(caption.created_datetime_utc).toLocaleDateString()}</span>
-                  <span>❤️ {caption.like_count} likes</span>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="flex justify-center items-center gap-4 mt-10">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-zinc-800 text-white rounded-lg disabled:opacity-40 hover:bg-zinc-700 transition-colors"
-          >
-            ← Previous
-          </button>
-          <span className="text-sm text-zinc-500">Page {page} of {totalPages}</span>
-          <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-4 py-2 bg-zinc-800 text-white rounded-lg disabled:opacity-40 hover:bg-zinc-700 transition-colors"
-          >
-            Next →
-          </button>
-        </div>
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center items-center gap-3 mt-14">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl disabled:opacity-30 hover:bg-zinc-700 transition-colors text-sm font-medium border border-zinc-700"
+            >
+              ← Previous
+            </button>
+            <span className="text-zinc-500 text-sm px-2">
+              {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl disabled:opacity-30 hover:bg-zinc-700 transition-colors text-sm font-medium border border-zinc-700"
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
