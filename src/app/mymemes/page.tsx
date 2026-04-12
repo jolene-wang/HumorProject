@@ -45,7 +45,7 @@ export default function MyMemesPage() {
       const { data } = await supabase
         .from("images")
         .select("id, url, created_datetime_utc, captions(id, content, like_count)")
-        .eq("created_by_user_id", user.id)
+        .eq("profile_id", user.id)
         .order("created_datetime_utc", { ascending: false });
 
       if (data) setImages(data as any);
@@ -64,15 +64,14 @@ export default function MyMemesPage() {
       return;
     }
 
-    // Re-fetch captions for this image using the known-working join
+    // Re-fetch captions for this image
     const { data: refreshed } = await supabase
-      .from("images")
-      .select("captions(id, content, like_count)")
-      .eq("id", imageId)
-      .single();
+      .from("captions")
+      .select("id, content, like_count")
+      .eq("image_id", imageId);
 
     setImages(prev => prev.map(img =>
-      img.id === imageId ? { ...img, captions: (refreshed as any)?.captions ?? img.captions, generating: false } : img
+      img.id === imageId ? { ...img, captions: refreshed ?? img.captions, generating: false } : img
     ));
     // Expand to show new captions
     setExpanded(prev => new Set(prev).add(imageId));
